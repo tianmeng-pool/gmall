@@ -20,7 +20,7 @@
     </appender>
     <!--输出到logstash的appender-->
     <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-        <destination>192.168.142.130:4560</destination>
+        <destination>47.115.60.167:4560</destination>
         <encoder charset="UTF-8" class="net.logstash.logback.encoder.LogstashEncoder"/>
     </appender>
     <root level="INFO">
@@ -28,4 +28,5 @@
         <appender-ref ref="FILE"/>
         <appender-ref ref="LOGSTASH"/>
     </root>
+    <logger name="com.lq.gmall" level="DEBUG"/>
 </configuration>

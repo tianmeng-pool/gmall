@@ -3,6 +3,7 @@ package com.lq.gmall.pms.service;
 import com.lq.gmall.pms.entity.Product;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lq.gmall.vo.PageInfoVo;
+import com.lq.gmall.vo.product.PmsProductParam;
 import com.lq.gmall.vo.product.PmsProductQueryParam;
 
 /**
@@ -16,4 +17,10 @@ import com.lq.gmall.vo.product.PmsProductQueryParam;
 public interface ProductService extends IService<Product> {
 
     PageInfoVo getPageProduct(PmsProductQueryParam productQueryParam, Integer pageSize, Integer pageNum);
+
+    /**
+     * 保存商品信息
+     * @param productParam
+     */
+    void saveProduct(PmsProductParam productParam);
 }
