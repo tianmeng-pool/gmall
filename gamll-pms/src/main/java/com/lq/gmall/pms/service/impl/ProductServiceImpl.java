@@ -12,6 +12,7 @@ import com.lq.gmall.vo.PageInfoVo;
 import com.lq.gmall.vo.product.PmsProductParam;
 import com.lq.gmall.vo.product.PmsProductQueryParam;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -127,28 +128,54 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
      *     NESTED:
      *          开启一个子事务(mysql不支持)，需要支持还原点功能的数据库才行
      *
+     *  总结：传播行为过程中，只要Requires_new被执行过就一定成功，不管后面出不出问题，
+     *       异常机制还是一样的，出现异常代码以后不执行，Required只要感知到异常就一定回滚，和外事务是什么传播行为无关
+     *  传播行为总是来定义，当一个事务存在的时候，他内部的事务该怎么执行。
      *
-     *  隔离级别
+     *  事务的问题:
+     *      Service自己调用自己的方法，无法加上真正的自己内部调整的各个事务
+     *      解决： 如果是对象.方法()就可以
+     *          1.要是能拿到ioc容器，从容器中再把我们的组件获取一下，用对象调方法
+     *
+     *  隔离级别: 解决读写加锁问题的(数据库底层方案) mysql默认可重复度(快照读)
+     *
+     *  读未提交
+     *  读已提交
+     *  可重复度
+     *  串行化
+     *
+     *  异常回滚策略:
+     *  异常：
+     *      运行时异常(不受检查异常)
+     *      编译时异常(受检异常)
+     *
+     *  运行时异常默认是回滚的
+     *  编译时异常默认是不会滚的
+     *      rollbackFor:指定哪些异常需要回滚
+     *      noRollbackFor:指定哪些异常不需要回滚
      *
      *
      */
-    @Transactional(propagation = Propagation.REQUIRED)
+    @Transactional(propagation = Propagation.REQUIRED,rollbackFor = Exception.class)
     @Override
     public void saveProduct(PmsProductParam productParam) {
+        //获取当前类的代理对象
+        ProductServiceImpl proxy = (ProductServiceImpl) AopContext.currentProxy();
+        log.debug("当前类的代理对象为:{}",proxy);
         //1.pms_product：保存商品基本信息
-       saveBaseProduct(productParam);
+        proxy.saveBaseProduct(productParam);
 
         //2.pms_product_attribute_value：保存这个商品所对应的所有属性的值
-        saveProductAttributeValue(productParam);
+        proxy.saveProductAttributeValue(productParam);
 
         //3.pms_product_full_reduction：保存商品的满减信息
-        saveProductFullReduction(productParam);
+        proxy.saveProductFullReduction(productParam);
 
         //4.pms_product_ladder：爆粗商品的阶梯信息
-        saveLadder(productParam);
+        proxy.saveLadder(productParam);
 
         //5.pms_sku_stock：sku库存表
-        saveSkuStock(productParam);
+        proxy.saveSkuStock(productParam);
        /* skuStockList.forEach((skuStock) -> {
             skuStock.setProductId(product.getId());
             skuStockMapper.insert(skuStock);
@@ -156,7 +183,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW,rollbackFor = Exception.class)
     public void saveSkuStock(PmsProductParam productParam) {
         List<SkuStock> skuStockList = productParam.getSkuStockList();
         for (int i = 0; i < skuStockList.size(); i++) {
@@ -173,7 +200,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         log.debug("当前线程id,name:{},{}",Thread.currentThread().getId(),Thread.currentThread().getName());
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW,rollbackFor = Exception.class)
     public void saveLadder(PmsProductParam productParam) {
         List<ProductLadder> productLadderList = productParam.getProductLadderList();
         productLadderList.forEach((productLadder) -> {
@@ -183,7 +210,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         log.debug("当前线程id,name:{},{}",Thread.currentThread().getId(),Thread.currentThread().getName());
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW,rollbackFor = Exception.class)
     public void saveProductFullReduction(PmsProductParam productParam) {
         List<ProductFullReduction> productFullReductionList = productParam.getProductFullReductionList();
         productFullReductionList.forEach((productFullReduction) -> {
@@ -193,7 +220,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         log.debug("当前线程id,name:{},{}",Thread.currentThread().getId(),Thread.currentThread().getName());
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW,rollbackFor = Exception.class)
     public void saveProductAttributeValue(PmsProductParam productParam) {
         List<ProductAttributeValue> productAttributeValueList = productParam.getProductAttributeValueList();
         productAttributeValueList.forEach((productAttributeValue) -> {
@@ -204,7 +231,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         log.debug("当前线程id,name:{},{}",Thread.currentThread().getId(),Thread.currentThread().getName());
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW,rollbackFor = Exception.class)
     public void saveBaseProduct(PmsProductParam productParam) {
         Product product = new Product();
         BeanUtils.copyProperties(productParam,product);
@@ -215,4 +242,6 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         threadLocal.set(product.getId());
         log.debug("当前线程id,name:{},{}",Thread.currentThread().getId(),Thread.currentThread().getName());
     }
+
+
 }

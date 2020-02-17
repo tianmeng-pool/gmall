@@ -4,6 +4,7 @@ import com.alibaba.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
@@ -44,7 +45,20 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  *        将默认的序列化器改为json的
  *
  *  如果发现事务加不上。开启基于注解的事务功能  @EableTransactionManagemet
+ *
+ *  事务的最终解决方案：
+ *      1.普通加事务。导入jdbc-starter。启动类上加@EnableTransactionManagement.方法加@Transactional
+ *      2.方法自己调自己类里面的加不上事务
+ *          1）、导入aop包，开启代理对象的相关功能
+ *              <dependency>
+ *                <groupId>org.springframework.boot</groupId>
+ *                 <artifactId>spring-boot-starter-aop</artifactId>
+ *             </dependency>
+ *          2）、获取当前类真正的代理对象，去调方法即可
+ *              1）、@EnableAspectJAutoProxy(exposeProxy = true)：暴露代理对象
+ *              2）、获取代理对象
  */
+@EnableAspectJAutoProxy(exposeProxy = true)//开启切面自动代理的功能
 @EnableTransactionManagement
 @EnableDubbo
 @MapperScan(basePackages = "com.lq.gmall.pms.mapper")
