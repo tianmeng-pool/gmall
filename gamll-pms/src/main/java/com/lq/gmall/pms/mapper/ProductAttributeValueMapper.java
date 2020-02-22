@@ -1,7 +1,11 @@
 package com.lq.gmall.pms.mapper;
 
+import com.lq.gmall.pms.entity.ProductAttribute;
 import com.lq.gmall.pms.entity.ProductAttributeValue;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.lq.gmall.to.es.EsProductAttributeValue;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +17,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  */
 public interface ProductAttributeValueMapper extends BaseMapper<ProductAttributeValue> {
 
+    List<EsProductAttributeValue> selectProductBaseAttrAndValue(Long id);
+
+    List<ProductAttribute> selectProductSaveAttrName(Long id);
 }

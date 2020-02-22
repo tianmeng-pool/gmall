@@ -7,4 +7,21 @@
         id, product_id, product_attribute_id, value
     </sql>
 
+    <!--selectProductBaseAttrAndValue-->
+    <select id="selectProductBaseAttrAndValue" resultType="com.lq.gmall.to.es.EsProductAttributeValue" parameterType="long">
+        select pav.*,pa.name,pa.type from pms_product_attribute_value pav
+            LEFT JOIN pms_product_attribute pa on pa.id=pav.product_attribute_id
+            where pav.product_id=#{id} and pa.type=1
+    </select>
+
+    <!--List<ProductAttribute> selectProductSaveAttrName(Long id);-->
+    <select id="selectProductSaveAttrName" resultType="com.lq.gmall.pms.entity.ProductAttribute" parameterType="long">
+        select * from pms_product_attribute where product_attribute_category_id =
+        (
+        select pa.product_attribute_category_id from pms_product_attribute pa
+        left join pms_product_attribute_value pav on pa.id=pav.product_attribute_id
+        where pav.product_id=#{id} and pa.type=0 LIMIT 1
+        ) and type = 0 ORDER BY sort DESC
+    </select>
+
 </mapper>
