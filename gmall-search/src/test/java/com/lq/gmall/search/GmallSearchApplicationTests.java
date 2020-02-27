@@ -1,5 +1,6 @@
 package com.lq.gmall.search;
 
+import com.lq.gmall.vo.es.SearchParam;
 import io.searchbox.client.JestClient;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
@@ -15,11 +16,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
 
-//@SpringBootTest
+@SpringBootTest
 class GmallSearchApplicationTests {
 
     @Autowired
     private JestClient jestClient;
+
+    @Autowired
+    private SearchProductService searchProductService;
 
     @Test
     void contextLoads() throws IOException {
@@ -51,6 +55,17 @@ class GmallSearchApplicationTests {
         String toString = builder.toString();
 
         System.out.println(toString);
+    }
+
+    @Test
+    public void dslTest(){
+
+        SearchParam searchParam = new SearchParam();
+
+        String keyWord = "手机";
+        searchParam.setKeyword(keyWord);
+
+        searchProductService.searchProduct(searchParam);
     }
 
 }

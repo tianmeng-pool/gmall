@@ -5,12 +5,18 @@ import com.lq.gmall.constant.EsConstant;
 import com.lq.gmall.search.SearchProductService;
 import com.lq.gmall.vo.es.SearchParam;
 import com.lq.gmall.vo.es.SearchResponse;
+import com.lq.gmall.vo.es.SearchResponseAttrVo;
 import io.searchbox.client.JestClient;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
+import io.searchbox.core.search.aggregation.MetricAggregation;
+import io.searchbox.core.search.aggregation.TermsAggregation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.index.query.*;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
@@ -21,6 +27,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,28 +52,64 @@ public class SearchProductServiceImpl implements SearchProductService {
         //1.构建检索语句，dsl语句
         String buildDsl = buildDsl(searchParam);
 
-        log.debug("检索的dsl语句为:{}",buildDsl);
+        log.error("检索的dsl语句为:{}",buildDsl);
 
         //2.构建检索
-        Search search = new Search.Builder("").addIndex(EsConstant.ES_PRODUCT_INDEX)
+        Search search = new Search.Builder(buildDsl).addIndex(EsConstant.ES_PRODUCT_INDEX)
                 .addType(EsConstant.ES_PRODUCT_INDEX_INFO)
                 .build();
+        SearchResult execute = null;
         try {
-            SearchResult execute = jestClient.execute(search);
-
-            SearchResponse searchResponse = buildSearchResponse(execute);
+            execute = jestClient.execute(search);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         //3.对检索的数据进行处理，把SearchResult转为SearchResponse
+        SearchResponse searchResponse = buildSearchResponse(execute);
 
-        return null;
+        //设置分页条件
+        searchResponse.setPageNum(searchParam.getPageNum());
+        searchResponse.setPageSize(searchParam.getPageSize());
+
+        return searchResponse;
     }
 
     private SearchResponse buildSearchResponse(SearchResult execute) {
 
-        return null;
+        SearchResponse searchResponse = new SearchResponse();
+
+        MetricAggregation aggregations = execute.getAggregations();
+
+        //searchResponse.setBrand();//设置品牌数据
+        //封装品牌数据
+        TermsAggregation brand_agg = aggregations.getTermsAggregation("brand_agg");
+
+        List<String> brandNames = new ArrayList<>();
+
+        brand_agg.getBuckets().forEach((bucket) -> {
+            String keyAsString = bucket.getKeyAsString();
+            brandNames.add(keyAsString);
+        });
+
+        SearchResponseAttrVo attrVo = new SearchResponseAttrVo();
+        attrVo.setName("品牌");
+        attrVo.setValue(brandNames);
+
+        searchResponse.setBrand(attrVo);
+
+        //searchResponse.setCatelog();//设置分类
+        //封装分类数据
+
+
+        //设置总记录数
+        searchResponse.setTotal(execute.getTotal());
+
+//        searchResponse.setAttrs();//设置筛选属性
+
+//        searchResponse.setProducts();//设置商品信息
+
+        return searchResponse;
     }
 
     /**
@@ -124,7 +167,6 @@ public class SearchProductServiceImpl implements SearchProductService {
         }
 
         //1.2.1按照属性过滤，按照品牌过滤、按照分类过滤
-
         sourceBuilder.query(boolQuery);
 
         //高亮
@@ -138,7 +180,27 @@ public class SearchProductServiceImpl implements SearchProductService {
         }
 
         //聚合
-        //sourceBuilder.aggregation(null);
+        //1.按照品牌聚合
+        TermsAggregationBuilder aggregationBuilder = AggregationBuilders.terms("brand_agg").field("brandName.keyword");
+        aggregationBuilder.subAggregation(AggregationBuilders.terms("brandId").field("brandId"));
+        sourceBuilder.aggregation(aggregationBuilder);
+
+        //2.按照分类聚合
+        TermsAggregationBuilder category_agg = AggregationBuilders.terms("category_agg").field("productCategoryName.keyword");
+        category_agg.subAggregation(AggregationBuilders.terms("categoryId_agg").field("productCategoryId"));
+        sourceBuilder.aggregation(category_agg);
+        //3.按照属性聚合
+        //获取内嵌属性的名字和路径
+        NestedAggregationBuilder attr_agg = AggregationBuilders.nested("attr_agg", "attrValueList");
+        //属性名聚合
+        TermsAggregationBuilder attrName_agg = AggregationBuilders.terms("attrName_agg").field("attrValueList.name");
+        //聚合属性名所对应的属性值
+        attrName_agg.subAggregation(AggregationBuilders.terms("attrValue_agg").field("attrValueList.value.keyword"));
+        //聚合属性名所对应的属性名id
+        attrName_agg.subAggregation(AggregationBuilders.terms("attrId_agg").field("attrValueList.productAttributeId"));
+
+        attr_agg.subAggregation(attrName_agg);
+        sourceBuilder.aggregation(attr_agg);
 
         //分页
         //从第几页开始
