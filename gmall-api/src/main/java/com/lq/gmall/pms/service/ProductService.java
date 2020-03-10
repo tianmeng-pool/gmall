@@ -2,6 +2,7 @@ package com.lq.gmall.pms.service;
 
 import com.lq.gmall.pms.entity.Product;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.lq.gmall.to.es.EsProduct;
 import com.lq.gmall.vo.PageInfoVo;
 import com.lq.gmall.vo.product.PmsProductParam;
 import com.lq.gmall.vo.product.PmsProductQueryParam;
@@ -39,4 +40,8 @@ public interface ProductService extends IService<Product> {
      * @return
      */
     Product productInfo(Long id);
+
+    EsProduct productAllInfo(Long id);
+
+    EsProduct productSkuInfo(Long id);
 }

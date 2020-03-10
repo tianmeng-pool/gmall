@@ -1,7 +1,9 @@
 package com.lq.gmall.ums.service;
 
+import com.alibaba.dubbo.config.annotation.Service;
 import com.lq.gmall.ums.entity.Member;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.springframework.stereotype.Component;
 
 /**
  * <p>
@@ -13,4 +15,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface MemberService extends IService<Member> {
 
+    Member login(String username, String password);
 }

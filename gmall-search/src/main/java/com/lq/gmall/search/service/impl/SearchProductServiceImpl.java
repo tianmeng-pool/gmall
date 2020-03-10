@@ -79,6 +79,11 @@ public class SearchProductServiceImpl implements SearchProductService {
         return searchResponse;
     }
 
+    /**
+     * 封装返回结果
+     * @param execute
+     * @return
+     */
     private SearchResponse buildSearchResponse(SearchResult execute) {
 
         SearchResponse searchResponse = new SearchResponse();
