@@ -30,10 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>
@@ -234,7 +231,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
         //构建dsl语句
-        searchSourceBuilder.query(QueryBuilders.termsQuery("id",id));
+        searchSourceBuilder.query(QueryBuilders.termsQuery("id", Arrays.asList(id)));
 
         Search search = new Search.Builder(searchSourceBuilder.toString())
                 .addType(EsConstant.ES_PRODUCT_INDEX)
