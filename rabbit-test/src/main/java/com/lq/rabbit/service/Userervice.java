@@ -79,4 +79,11 @@ public class Userervice {
         channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);
     }
 
+    @SneakyThrows
+    @RabbitListener(queues = {"user-order-queue"})
+    public void closeOrder(Order order,Channel channel,Message message){
+        System.out.println("正在关闭订单:" + order);
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);
+    }
+
 }
