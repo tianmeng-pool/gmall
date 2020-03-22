@@ -2,6 +2,10 @@ package com.lq.gmall.oms.service;
 
 import com.lq.gmall.oms.entity.Order;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.lq.gmall.vo.order.ConfirmOrderVo;
+import com.lq.gmall.vo.order.OrderCreateVo;
+
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -13,4 +17,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface OrderService extends IService<Order> {
 
+    ConfirmOrderVo orderConfirm(Long id);
+
+    OrderCreateVo createOrder(BigDecimal totalPrice, Long addressId, String note);
 }

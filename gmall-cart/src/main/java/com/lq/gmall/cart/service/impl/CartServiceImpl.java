@@ -240,6 +240,7 @@ public class CartServiceImpl implements CartService {
         return cartResponse;
     }
 
+
     private CartItem getCartItem(Long skuId, Integer num, String finalCartKey) {
         RMap<String, String> map = redissonClient.getMap(finalCartKey);
         String cartItemJson = map.get(skuId.toString());
@@ -399,5 +400,17 @@ public class CartServiceImpl implements CartService {
         }
 
         return newCartItem;
+    }
+
+    /**
+     * 查询会员的购物车中锁勾选中的购物项
+     * @param accessToken
+     * @return
+     */
+    @Override
+    public List<CartItem> getMemberFromOrderConfirm(String accessToken) {
+
+
+        return null;
     }
 }
