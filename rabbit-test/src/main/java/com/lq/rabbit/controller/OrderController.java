@@ -23,7 +23,7 @@ public class OrderController {
     @GetMapping("/create")
     public Order createOrder(Integer skuId,Integer memberId,Integer num){
         Order order = new Order(Long.parseLong(UUID.randomUUID().toString().replace("-","")),skuId,memberId,num);
-        rabbitTemplate.convertAndSend("order-exchange","create-order",order);
+        //rabbitTemplate.convertAndSend("order-exchange","create-order",order);
 
         rabbitTemplate.convertAndSend("user-order-delay-exchange","order_delay",order);
 

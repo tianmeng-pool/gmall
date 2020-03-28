@@ -409,8 +409,31 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     public List<CartItem> getMemberFromOrderConfirm(String accessToken) {
+        List<CartItem> cartItems = new ArrayList<>();
+        //1.根据用户的accessToken获取到购物车中被选中的数据
+        UserCartKey cartKey = cartComponent.getCartKey(accessToken, null);
+        String finalCartKey = cartKey.getFinalCartKey();
+        RMap<String, String> cart = redissonClient.getMap(finalCartKey);
+        String checkItemJson = cart.get(CartConstant.CART_CHECKED_KEY);
 
+        Set<Long> items = JSON.parseObject(checkItemJson, new TypeReference<Set<Long>>(){});
+        items.forEach((item)->{
+            String itemJson = cart.get(item.toString());
+            cartItems.add(JSON.parseObject(itemJson,CartItem.class));
+        });
+        return cartItems;
+    }
 
-        return null;
+    @Override
+    public void removeCartItem(String accessToken, List<Long> skuIds) {
+        UserCartKey cartKey = cartComponent.getCartKey(accessToken, null);
+        String finalCartKey = cartKey.getFinalCartKey();
+        RMap<String, String> map = redissonClient.getMap(finalCartKey);
+        skuIds.forEach((skuId)->{
+            //移除已购买的商品
+            map.remove(skuId.toString());
+        });
+        //移除勾选的状态保存
+        map.put(CartConstant.CART_CHECKED_KEY,JSON.toJSONString(new LinkedHashSet<Long>()));
     }
 }
